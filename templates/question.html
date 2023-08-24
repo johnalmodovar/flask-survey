@@ -5,6 +5,10 @@
   {% if error %}
   <p style="color: red; font-weight: bold">{{ error }}</p>
   {% endif %}
+  {% for msg in get_flashed_messages() %}
+    <p style="color: red; font-weight: bold">{{ msg }}</p>
+  {% endfor %}
+
   <form action="/answer" method="POST">
 
       <!-- you should have one item like this for every choice -->
