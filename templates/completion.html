@@ -4,4 +4,10 @@
 
   <h1>Thanks for completing this survey!</h1>
 
+  <ul>
+  {% for line in lines %}
+   <li>{{ line }}</li>
+  {% endfor %}
+  </ul>
+
 {% endblock %}

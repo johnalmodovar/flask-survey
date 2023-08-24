@@ -38,7 +38,7 @@ def load_questions(num):
     # self.prompt = prompt
     # self.choices = choices
     # self.allow_text = allow_text
-    print(f"\n \n This is num : {num} \n \n")
+    # print(f"\n \n This is num : {num} \n \n")
 
     survey_question = survey.questions[num]
 
@@ -49,32 +49,35 @@ def load_questions(num):
 
 
 
-@app.post("/questions/<num>")
+@app.post("/answer")
 def submit_questions():
     """Submit survey response, load next question."""
 
     curr_answer = request.form["answer"]
     responses.append(curr_answer)
-    redirect("/answer")
 
-
-@app.get('/answer')
-def receive_answer():
-    """When submitting an answer, grab from request.form, append to response,
-    then send them to the next question."""
+    # print(f"\n \n \n response list: {responses} \n \n \n")
 
     if len(responses) >= len(survey.questions):
         redirect_url = "/completed"
     else:
         redirect_url = f"/questions/{len(responses)}"
 
-    redirect(redirect_url)
+    return redirect(redirect_url)
+
 
 
 @app.get('/completed')
 def show_survey_finish():
     """Provide a bulleted list of question + response"""
 
+    lines = []
+    for i in range(len(responses)):
+        # FIXME: using bold inside of line doesn't work. find another way.
+        line = f"<b>{survey.questions[i].prompt}</b> {responses[i]}"
+        lines.append(line)
+
+
+    print(f"\n\n\n lines: {lines} \n\n\n")
     return render_template('completion.html',
-                           questions= survey.questions, #actually want prompt
-                           answers = responses)
+                           lines = lines)
