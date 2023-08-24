@@ -18,9 +18,13 @@ responses = []
 def show_start_page():
     """ Generates title of survey, its instructions, and the start button """
 
+
+    #TODO: 6. set session["responses"] = []
+
     survey_title = survey.title
     survey_instructions = survey.instructions
 
+    #Refactor: send JUST the survey, rather than splitting it here.
     return render_template("survey_start.html",
                            title = survey_title,
                            instructions = survey_instructions)
@@ -31,6 +35,7 @@ def redirect_to_survey():
 
     return redirect("/questions/0")
 
+
 @app.get("/questions/<int:num>")
 def load_questions(num):
     """ Load questions from the survey """
@@ -40,30 +45,39 @@ def load_questions(num):
     # self.allow_text = allow_text
     # print(f"\n \n This is num : {num} \n \n")
 
-    survey_question = survey.questions[num]
+
+    #DONE: check responses length to account for 'skipping ahead'
+    #DONE: if responses are 'done', just send ahead
+
+    if len(responses) < num:
+        return redirect(f'/questions/{len(responses)}')
+    elif len(responses) == survey.questions:
+        return redirect("/answer")
 
     return render_template("question.html",
-                           prompt = survey_question.prompt,
-                           choices = survey_question.choices,
-                           allow_text = survey_question.allow_text)
-
+                           question = survey.questions[num])
 
 
 @app.post("/answer")
 def submit_questions():
     """Submit survey response, load next question."""
 
-    curr_answer = request.form["answer"]
-    responses.append(curr_answer)
+    #curr_answer = request.form["answer"]
+    curr_answer = request.form.get("answer") #should return None rather than an error.
 
-    # print(f"\n \n \n response list: {responses} \n \n \n")
+    if curr_answer:
+        responses.append(curr_answer)
 
-    if len(responses) >= len(survey.questions):
-        redirect_url = "/completed"
+        # print(f"\n \n \n response list: {responses} \n \n \n")
+        if len(responses) >= len(survey.questions):
+            return redirect("/completed")
+        else:
+            return redirect(f"/questions/{len(responses)}")
     else:
-        redirect_url = f"/questions/{len(responses)}"
+        return render_template("question.html",
+                           question = survey.questions[len(responses)],
+                           error = "Need to choose something!")
 
-    return redirect(redirect_url)
 
 
 
@@ -71,13 +85,6 @@ def submit_questions():
 def show_survey_finish():
     """Provide a bulleted list of question + response"""
 
-    lines = []
-    for i in range(len(responses)):
-        # FIXME: using bold inside of line doesn't work. find another way.
-        line = f"<b>{survey.questions[i].prompt}</b> {responses[i]}"
-        lines.append(line)
-
-
-    print(f"\n\n\n lines: {lines} \n\n\n")
     return render_template('completion.html',
-                           lines = lines)
+                           answers = responses,
+                           questions = survey.questions)

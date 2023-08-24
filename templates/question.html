@@ -1,12 +1,14 @@
 {% extends 'base.html' %}
 {% block content %}
 
-  <h1>{{ prompt }}</h1>
-
+  <h1>{{ question.prompt }}</h1>
+  {% if error %}
+  <p style="color: red; font-weight: bold">{{ error }}</p>
+  {% endif %}
   <form action="/answer" method="POST">
 
       <!-- you should have one item like this for every choice -->
-      {% for choice in choices %}
+      {% for choice in question.choices %}
       <p>
         <input
             type="radio"
