@@ -1,7 +1,10 @@
 {% extends 'base.html' %}
-{% block content %}
 
+{% block title %}
   <h1>{{ question.prompt }}</h1>
+{% endblock %}
+
+{% block content %}
   {% if error %}
   <p style="color: red; font-weight: bold">{{ error }}</p>
   {% endif %}

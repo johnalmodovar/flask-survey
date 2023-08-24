@@ -1,6 +1,7 @@
-from flask import Flask, request, render_template, redirect, flash, session
+from flask import Flask, request, render_template, redirect, flash, session, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
-from surveys import satisfaction_survey as survey
+#from surveys import satisfaction_survey as survey
+from surveys import surveys as survey_list
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "never-tell!"
@@ -10,30 +11,49 @@ debug = DebugToolbarExtension(app)
 
 # session = []
 
-#surveys = {"satisfaction: satisfaction_survey",
-# "personality" : personality_quiz
-# }
+surveys = {"satisfaction": satisfaction_survey,
+"personality" : personality_quiz
+}
 
+#FIXME: we had a mistake in trying to jsonify a class instance
+#the PROPER way to do this is have the class spit out a JSON object
+#the current janky fix is to hard code it, and have survey_choice target surveys
+
+#FIXME: every survey["choice"] should be switched back to survey.
 
 @app.get("/")
+def show_select_page():
+    """ Generates title of survey, its instructions, and the start button """
+
+    #send in survey_list here (so that we can access keys)
+
+    return render_template("survey_select.html",
+                           options = survey_list.keys())
+
+
+@app.post("/start")
 def show_start_page():
     """ Generates title of survey, its instructions, and the start button """
 
-    #FIXME: initialize session in post request rather than here because
-    # sessions are "changing" the state of the server
-    session["responses"] = []
-    survey_title = survey.title
-    survey_instructions = survey.instructions
+    #send in survey_list here (so that we can access keys)
+    survey_choice = request.form["survey"]
+    session["survey"] = survey_list[survey_choice]
+    breakpoint()
 
-
-    #FIXME: send JUST the survey, rather than splitting it here.
+    print(f"\n\n\n session survey is: {session['survey']} \n\n\n")
+    # breakpoint()
     return render_template("survey_start.html",
-                           title = survey_title,
-                           instructions = survey_instructions)
+                            survey = jsonify(session["survey"]) )
+
 
 @app.post("/begin")
 def redirect_to_survey():
-    """ Click the start button to redirect to survey questions """
+    """ Click the start button to redirect to survey questions,
+    initialize session responses"""
+
+    #set survey on session["survey"] ??
+    #curr_survey = request.form[]
+    session["responses"] = []
 
     return redirect("/questions/0")
 
@@ -47,19 +67,18 @@ def load_questions(num):
     # self.allow_text = allow_text
     # print(f"\n \n This is num : {num} \n \n")
 
+    if isinstance(session.get("responses"), list):
+        if len(session["responses"]) < num:
+            flash("Please don't skip around questions")
+            return redirect(f'/questions/{len(session["responses"])}')
+        elif len(session["responses"]) == session["survey"].questions:
+            return redirect("/completed")
 
-    #DONE: check responses length to account for 'skipping ahead'
-    #DONE: if responses are 'done', just send ahead
-    #FIXME: check for active session in conditional
-
-    if len(session["responses"]) < num:
-        flash("Please don't skip around questions")
-        return redirect(f'/questions/{len(session["responses"])}')
-    elif len(session["responses"]) == survey.questions:
-        return redirect("/answer") #FIXME: change redirect to /completed
-
-    return render_template("question.html",
-                           question = survey.questions[num])
+        return render_template("question.html",
+                            question = session["survey"].questions[num])
+    else:
+        flash("click the start button! don't skip")
+        return redirect('/')
 
 
 @app.post("/answer")
@@ -75,13 +94,13 @@ def submit_questions():
         session["responses"] = responses
 
         # print(f"\n \n \n response list: {responses} \n \n \n")
-        if len(session["responses"]) >= len(survey.questions):
+        if len(session["responses"]) >= len(session["survey"].questions):
             return redirect("/completed")
         else:
             return redirect(f"/questions/{len(session['responses'])}")
     else:
         return render_template("question.html",
-                           question = survey.questions[len(session["responses"])],
+                           question = session["survey"].questions[len(session["responses"])],
                            error = "Need to choose something!")
 
 
@@ -93,4 +112,4 @@ def show_survey_finish():
 
     return render_template('completion.html',
                            answers = session["responses"],
-                           questions = survey.questions)
+                           questions = session["survey"].questions)

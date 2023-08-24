@@ -1,9 +1,16 @@
 {% extends 'base.html' %}
-{% block content %}
 
-  <h1> {{ title }}</h1>
+{% block title%}
+  <h1> {{ survey.title }}</h1>
+{% endblock %}
+
+{% block content %}
+  {% for msg in get_flashed_messages() %}
+  <p style="color: red; font-weight: bold">{{ msg }}</p>
+  {% endfor %}
+
   <p>
-    {{ instructions }}
+    {{ survey.instructions }}
   </p>
 
   <!--
@@ -11,6 +18,7 @@
     You'll need to write the applicable code to handle this request
    -->
   <form action="/begin" method="POST">
+    <label for="survey">Please choose a survey</label>
     <button>Start!</button>
   </form>
 

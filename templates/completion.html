@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
 
-{% block content %}
-
+{% block title%}
   <h1>Thanks for completing this survey!</h1>
+{% endblock %}
 
+{% block content %}
   <ul>
   {% for question in questions %}
    <li><b>{{ question.prompt }}</b> {{ answers[loop.index0] }}</li>
